@@ -25,7 +25,7 @@ Next to download it
 
 `cd ~`
 
-`git clone https://github.com/mddrill/WallAppiOS/`
+`git clone https://github.com/mddrill/WallAppBackend/`
 
 And to run it
 
