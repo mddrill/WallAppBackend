@@ -3,7 +3,7 @@ Django backend for TSL hiring assignment
 
 Instructions for running
 
-First install Django and Django REST Framework
+First install the dependencies
 
 `sudo pip install django`
 
