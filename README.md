@@ -5,6 +5,12 @@ Instructions for running
 
 First install the dependencies
 
+If pip is not already installed:
+
+`sudo easy_install pip`
+
+Then
+
 `sudo pip install django`
 
 `sudo pip install djangorestframework`
