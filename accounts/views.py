@@ -33,7 +33,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         # No one can list all accounts
         elif self.action in ('list', ):
-            self.permission_classes = [AllowNone, ]
+            self.permission_classes = [AllowAny, ]#[AllowNone, ]
         return super(self.__class__, self).get_permissions()
 
     def create(self, request, *args, **kwargs):

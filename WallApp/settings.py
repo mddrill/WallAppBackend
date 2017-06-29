@@ -31,6 +31,7 @@ ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1']
 # Application definition
 
 INSTALLED_APPS = [
+    'rest_framework.authtoken',
     'sslserver',
     'djangosecure',
     'post.apps.PostConfig',
@@ -125,7 +126,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 REST_FRAMEWORK = {
-    'PAGE_SIZE': 10
+    'PAGE_SIZE': 10,
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    )
 }
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
