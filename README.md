@@ -3,59 +3,84 @@ Django backend for TSL hiring assignment
 
 Instructions for running
 
-First install the dependencies
-
-Python 3 is required for this to install python 3 through homebrew run:
-
+Python 3 is required for this, to install python 3 through homebrew run:
 `brew install python3`
 
 If you don't have homebrew:
-
 `/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
 
-If pip is not already installed:
+Next download the repo
+```
+cd ~
+git clone https://github.com/mddrill/WallAppBackend/
+cd ~/WallAppBackend
+```
 
-`sudo easy_install pip`
+Then create the virtual environment
+```
+virtualenv -p python3 venv
+source venv/bin/activate
+```
 
-Then
+Then install the dependencies through requirements.txt
+`pip install -r requirements.txt`
 
-`sudo pip3 install django`
-
-`sudo pip3 install djangorestframework`
-
-`sudo pip3 install django-sslserver`
-
-`sudo pip3 install django-secure`
-
-`sudo pip3 install coreapi-cli`
-
-Next download it
-
-`cd ~`
-
-`git clone https://github.com/mddrill/WallAppBackend/`
+Now create the database
+```
+python manage.py makemigrations
+python manage.py migrate
+```
 
 Then run the unit tests
+`python manage.py test`
 
-`cd ~/WallAppBackend`
+And run the it on localhost
+`python manage.py runserver`
 
-`python3 manage.py test`
+You can view the posts without authenticating
+`curl --request GET http://127.0.0.1:8000/post/`
 
-And run it
+You can submit a post after creating an account and authenticating
+```
+curl --data "username=<username>&password=<password>" http://127.0.0.1:8000/accounts/
+curl curl --data "username=<username>&password=<password" http://127.0.0.1:8000/api-token-auth/
+```
+This will return a token which you can use to authenticate your post
+```
+curl --data '{"text": "testing123"}' \
+--header "Authorization: Token <token>" \
+--header "Content-Type:application/json" \
+--header "Accept: application/json" \
+http://127.0.0.1:8000/post/
+```
+The post should now be visible 
+`curl http://127.0.0.1:8000/post/`
 
-`python3 manage.py runserver`
+You can also edit and delete the post with the backend api, but this functionality is not yet implemented on the frontend
 
-It should now be running on `http://127.0.0.1:8000/`
+To edit
+```
+curl --data '{"text": "<new text>"}'  \
+--header "Authorization: Token <token>" \
+--header "Content-Type:application/json" \
+--header "Accept: application/json" \
+--request PATCH http://127.0.0.1:8000/post/<post id>/
+```
 
-I was using `httpie` to send http requests to the server to install httpie:
+You can get the post id by reading the posts with `curl http://127.0.0.1:8000/post/` Assuming this is your first post, the id will be 1
 
-`brew install httpie`
+To delete
+```
+curl --header "Authorization: Token <token>" \
+--header "Content-Type:application/json" \
+--header "Accept: application/json" \
+--request DELETE http://127.0.0.1:8000/post/<post id>/
+```
 
-To create an account run `http POST http://127.0.0.1:8000/accounts/ username=:"<username>" password="<password>" email="<email>"`
+Now if you run `curl http://127.0.0.1:8000/post/` the post will be gone
 
-You can now submit posts at `http://127.0.0.1:800/post/` after logging in through the django browser tool
 
-The unit tests should confirm that the email sending is working, if you want to test it out with a real email, you can uncomment this block in settings.py:
+The unit tests should confirm that the email sending is working. If you want to test it out with a real email, you can uncomment this block in settings.py:
 
     '''EMAIL_USE_TLS = True
     EMAIL_HOST = 'smtp.gmail.com'
@@ -69,4 +94,4 @@ and replace the email host user and password with a gmail account. Be sure to al
 
 Now to test it with the iOS frontend you will have to run the backend with ssl like so:
 
-`python3 manage.py runsslserver`
+`python manage.py runsslserver`
