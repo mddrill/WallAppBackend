@@ -4,10 +4,14 @@ Django backend for TSL hiring assignment
 Instructions for running
 
 Python 3 is required for this, to install python 3 through homebrew run:
-`brew install python3`
+```
+brew install python3
+```
 
 If you don't have homebrew:
-`/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
+```
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+```
 
 Next download the repo
 ```
@@ -23,7 +27,9 @@ source venv/bin/activate
 ```
 
 Then install the dependencies through requirements.txt
-`pip install -r requirements.txt`
+```
+pip install -r requirements.txt
+```
 
 Now create the database
 ```
@@ -32,13 +38,19 @@ python manage.py migrate
 ```
 
 Then run the unit tests
-`python manage.py test`
+```
+python manage.py test
+```
 
 And run the it on localhost
-`python manage.py runserver`
+```
+python manage.py runserver
+```
 
 You can view the posts without authenticating
-`curl --request GET http://127.0.0.1:8000/post/`
+```
+curl --request GET http://127.0.0.1:8000/post/
+```
 
 You can submit a post after creating an account and authenticating
 ```
@@ -54,7 +66,9 @@ curl --data '{"text": "testing123"}' \
 http://127.0.0.1:8000/post/
 ```
 The post should now be visible 
-`curl http://127.0.0.1:8000/post/`
+```
+curl http://127.0.0.1:8000/post/
+```
 
 You can also edit and delete the post with the backend api, but this functionality is not yet implemented on the frontend
 
@@ -93,5 +107,6 @@ The unit tests should confirm that the email sending is working. If you want to 
 and replace the email host user and password with a gmail account. Be sure to allow emails from unsecure apps in your account by following the instructions here https://support.google.com/accounts/answer/6010255?hl=en
 
 Now to test it with the iOS frontend you will have to run the backend with ssl like so:
-
-`python manage.py runsslserver`
+```
+python manage.py runsslserver
+```
