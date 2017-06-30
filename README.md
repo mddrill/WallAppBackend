@@ -54,9 +54,20 @@ curl --request GET http://127.0.0.1:8000/post/
 
 You can submit a post after creating an account and authenticating
 ```
-curl --data "username=<username>&password=<password>" http://127.0.0.1:8000/accounts/
-curl curl --data "username=<username>&password=<password" http://127.0.0.1:8000/api-token-auth/
+curl --data '{"username": "<username>", "password": "<password>"}' \
+--header "Content-Type:application/json" \
+--header "Accept: application/json" \
+http://127.0.0.1:8000/accounts/
 ```
+
+And get the token
+```
+curl --data '{"username": "<username>", "password": "<password>"}' \
+--header "Content-Type:application/json" \
+--header "Accept: application/json" \
+http://127.0.0.1:8000/api-token-auth/
+```
+
 This will return a token which you can use to authenticate your post
 ```
 curl --data '{"text": "testing123"}' \
