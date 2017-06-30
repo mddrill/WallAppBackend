@@ -54,7 +54,7 @@ curl --request GET http://127.0.0.1:8000/post/
 
 You can submit a post after creating an account and authenticating
 ```
-curl --data '{"username": "<username>", "password": "<password>"}' \
+curl --data '{"username": "testuser", "password": "testpassword"}' \
 --header "Content-Type:application/json" \
 --header "Accept: application/json" \
 http://127.0.0.1:8000/accounts/
@@ -62,7 +62,7 @@ http://127.0.0.1:8000/accounts/
 
 And get the token
 ```
-curl --data '{"username": "<username>", "password": "<password>"}' \
+curl --data '{"username": "testuser", "password": "testpassword"}' \
 --header "Content-Type:application/json" \
 --header "Accept: application/json" \
 http://127.0.0.1:8000/api-token-auth/
@@ -85,7 +85,7 @@ You can also edit and delete the post with the backend api, but this functionali
 
 To edit
 ```
-curl --data '{"text": "<new text>"}'  \
+curl --data '{"text": "new text"}'  \
 --header "Authorization: Token <token>" \
 --header "Content-Type:application/json" \
 --header "Accept: application/json" \
