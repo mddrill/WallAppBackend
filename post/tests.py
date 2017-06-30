@@ -6,6 +6,8 @@ from rest_framework import status
 from WallApp.test_utils import *
 from rest_framework.test import APITestCase
 import json
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient
 
 global N_TEST_USERS
 global USERNAMES
@@ -15,38 +17,6 @@ global ADMIN_USERNAME
 global ADMIN_PASSWORD
 global ADMIN_EMAIL
 global POSTS
-
-# Test Models
-
-'''class PostTestCase(TestCase):
-
-    """
-    Test that posts have the correct text after creation
-    """
-
-    TEXT_1 = 'user1\'s text'
-    TEXT_2 = 'user2\'s text'
-    TEXT_3 = 'user3\'s text'
-
-    def setUp(self):
-        self.user1 = User.objects.create_superuser('user1', 'user1@email.com', 'password1')
-        self.user2 = User.objects.create_superuser('user2', 'user1@email.com', 'password2')
-        self.user3 = User.objects.create_superuser('user3', 'user1@email.com', 'password3')
-
-        Post.objects.create(author=self.user1, text=PostTestCase.TEXT_1)
-        Post.objects.create(author=self.user2, text=PostTestCase.TEXT_2)
-        Post.objects.create(author=self.user3, text=PostTestCase.TEXT_3)
-
-    def test_posts(self):
-        self.post1 = Post.objects.get(author=self.user1)
-        self.assetEqual(PostTestCase.Text_1, self.post1.text)
-
-        self.post2 = Post.objects.get(author=self.user2)
-        self.assetEqual(PostTestCase.Text_2, self.post2.text)
-
-        self.post3 = Post.objects.get(author=self.user3)
-        self.assetEqual(PostTestCase.Text_3, self.post3.text)'''
-
 
 # Test With Client
 
@@ -59,7 +29,7 @@ class PostTest(APITestCase):
         """
         Set up tests
         """
-        self.client = Client()
+        self.client = APIClient()
 
         self.assertEqual(N_TEST_USERS, len(USERNAMES), 'USERNAMES should be N_TEST_USERS length')
         self.assertEqual(N_TEST_USERS, len(EMAILS), 'EMAILS should be N_TEST_USERS length')
@@ -80,7 +50,14 @@ class PostTest(APITestCase):
     def tearDown(self):
         self.test_posts = []
         Post.objects.all().delete()
-        
+
+    def login(self, username):
+        token = Token.objects.get(user__username=username)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+
+    def logout(self):
+        self.client.credentials()
+
     def create_test_posts(self):
         """
         Create some test posts, this can't be in setup because test_create_post creates posts a different way
@@ -121,14 +98,12 @@ class PostTest(APITestCase):
         # First try with no user logged in (this should throw a value error because it will try and assign an anonymous user to the post)
         response = self.client.post('/post/', {'text' : 'this text should not go through because no user is logged in'})
         # Check that the response is 403 Forbidden.
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN , 'Was able to post to the post without logging in')
+        self.assertNotEqual(response.status_code, status.HTTP_201_CREATED , 'Was able to post to the post without logging in')
 
         # Next try with three test users logged in and check that response is 200 OK and text and published time is accurate
         for i in range(N_TEST_USERS):
             # Log user  in
-            logged_in = self.client.login(username=USERNAMES[i], password=PASSWORDS[i])
-            # Check that we're logged in
-            self.assertTrue(logged_in, 'Error logging in with test user number {}'.format(i))
+            self.login(USERNAMES[i])
             # Post text
             response = self.client.post('/post/', {'text' : POSTS[i]})
             # Check that response is CREATED
@@ -142,6 +117,7 @@ class PostTest(APITestCase):
             time_difference_mins, time_difference_secs = divmod(time_difference.days * 86400 + time_difference.seconds, 60)
             self.assertEqual(time_difference_mins, 0, 'Incorrect posted_at time, the post says it was posted at a time that is in the future')
             self.assertTrue(time_difference_secs < 30, 'Either incorrect posted_at time, or the post took longer than 30 seconds to be posted')
+            self.logout()
 
     def test_delete_post(self):
         """
@@ -153,12 +129,11 @@ class PostTest(APITestCase):
         # Try to delete them without logging in (should get 403 Forbidden)
         for test_post in self.test_posts:
             response = self.client.delete('/post/{}/'.format(test_post.pk))
-            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, 'Was able to delete a post without logging in')
+            self.assertNotEqual(response.status_code, status.HTTP_204_NO_CONTENT, 'Was able to delete a post without logging in')
 
         for i in range(N_TEST_USERS):
             # login as user and try to delete all posts
-            logged_in = self.client.login(username=USERNAMES[i], password=PASSWORDS[i])
-            self.assertTrue(logged_in, 'Error logging in with test user number {}'.format(i))
+            self.login(USERNAMES[i])
             # Try and delete their posts (we have to start indexing at i because the posts before i have been deleted)
             for test_post in self.test_posts[i:]:
                 # If pk is from logged in user, make sure that delete is successful
@@ -168,19 +143,21 @@ class PostTest(APITestCase):
                 # Otherwise delete should fail
                 else:
                     response = self.client.delete('/post/{}/'.format(test_post.pk))
-                    self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, 'Test user was able to delete a post that did not belong to it')
+                    self.assertNotEqual(response.status_code, status.HTTP_204_NO_CONTENT, 'Test user was able to delete a post that did not belong to it')
+            self.logout()
 
         # Check that admins can delete any post
         # Create test posts
         self.create_test_posts()
 
         # Try and delete posts as admin, all should succeed
-        logged_in = self.client.login(username=ADMIN_USERNAME, password=ADMIN_PASSWORD)
-        self.assertTrue(logged_in, 'Error logging in with test admin user')
+        self.login(ADMIN_USERNAME)
 
         for test_post in self.test_posts:
             response = self.client.delete('/post/{}/'.format(test_post.pk))
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT, 'Was not able to delete a post as admin')
+
+        self.logout()
         
         
     def test_patch_post(self):
@@ -197,12 +174,11 @@ class PostTest(APITestCase):
             response = self.client.patch('/post/{}/'.format(test_post.pk),
                                          json.dumps({'text': NEW_TEXT}),
                                          content_type='application/json')
-            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, 'Was able to edit a post without logging in')
+            self.assertNotEqual(response.status_code, status.HTTP_200_OK, 'Was able to edit a post without logging in')
 
         for i in range(N_TEST_USERS):
             # login as user and try to edit all posts
-            logged_in = self.client.login(username=USERNAMES[i], password=PASSWORDS[i])
-            self.assertTrue(logged_in, 'Error logging in with test user number {}'.format(i))
+            self.login(USERNAMES[i])
             # Try and edit their posts
             for test_post in self.test_posts:
                 # If pk is from logged in user, make sure that patch is successful
@@ -216,11 +192,12 @@ class PostTest(APITestCase):
                     response = self.client.patch('/post/{}/'.format(test_post.pk),
                                                  json.dumps({'text': NEW_TEXT}),
                                                  content_type='application/json')
-                    self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, 'Test user was able to edit a post that did not belong to it')
+                    self.assertNotEqual(response.status_code, status.HTTP_200_OK, 'Test user was able to edit a post that did not belong to it')
+
+            self.logout()
 
         # Try and edit posts as admin, all should fail
-        logged_in = self.client.login(username=ADMIN_USERNAME, password=ADMIN_PASSWORD)
-        self.assertTrue(logged_in, 'Error logging in with test admin user')
+        self.login(ADMIN_USERNAME)
 
         for test_post in self.test_posts:
             response = self.client.patch('/post/{}/'.format(test_post.pk),
@@ -228,3 +205,5 @@ class PostTest(APITestCase):
                                          content_type='application/json')
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN,
                              'Was able to edit a user\'s post as admin')
+
+        self.logout()

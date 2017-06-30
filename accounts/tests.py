@@ -1,10 +1,12 @@
 from django.contrib.auth.models import User
 import json
-from django.test import Client, TestCase
+from django.test import TestCase
 from rest_framework import status
 from WallApp.test_utils import *
 from django.core import mail
 from accounts.email_info import *
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient
 
 
 global WELCOME_EMAIL_SUBJECT
@@ -30,7 +32,7 @@ class AccountsTest(TestCase):
         """
         Set up tests
         """
-        self.client = Client()
+        self.client = APIClient()
 
         User.objects.create_superuser(username=ADMIN_USERNAME,
                                       email=ADMIN_EMAIL,
@@ -58,6 +60,13 @@ class AccountsTest(TestCase):
             self.users += [User.objects.create_user(username=USERNAMES[i],
                                                      email=EMAILS[i],
                                                      password=PASSWORDS[i])]
+
+    def login(self, username):
+        token = Token.objects.get(user__username=username)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+
+    def logout(self):
+        self.client.credentials()
 
     def test_create_account(self):
         """
@@ -90,18 +99,17 @@ class AccountsTest(TestCase):
 
         # Try and get their information without logging in (should fail)
         response = self.client.get('/accounts/')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, 'Was able to view account list without logging in')
+        self.assertNotEqual(response.status_code, status.HTTP_200_OK, 'Was able to view account list without logging in')
         for account in self.users:
             response = self.client.get('/accounts/{}/'.format(account.pk))
-            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, 'Was able to view account details without logging in')
+            self.assertNotEqual(response.status_code, status.HTTP_200_OK, 'Was able to view account details without logging in')
 
         for i in range(N_TEST_USERS):
             # login as user and try to access accounts
-            logged_in = self.client.login(username=USERNAMES[i], password=PASSWORDS[i])
-            self.assertTrue(logged_in, 'Error logging in with test user number {}'.format(i))
+            self.login(USERNAMES[i])
             # Try and get their information
             response = self.client.get('/accounts/')
-            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, 'Was able to view account list after logging in')
+            self.assertNotEqual(response.status_code, status.HTTP_200_OK, 'Was able to view account list after logging in')
             for account in self.users:
                 # If account belongs to the user that's logged it, get should be successful
                 if account == self.users[i]:
@@ -110,19 +118,21 @@ class AccountsTest(TestCase):
                 # Otherwise get should fail
                 else:
                     response = self.client.get('/accounts/{}/'.format(account.pk))
-                    self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, 'Test user was able to  view account details that did not belong to it')
+                    self.assertNotEqual(response.status_code, status.HTTP_200_OK, 'Test user was able to  view account details that did not belong to it')
+            self.logout()
 
         # Try and view all accounts as admin (should fail in all cases)
-        logged_in = self.client.login(username=ADMIN_USERNAME, password=ADMIN_PASSWORD)
-        self.assertTrue(logged_in, 'Error logging in with test admin user')
+        self.login(ADMIN_USERNAME)
 
         response = self.client.get('/accounts/')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN,
+        self.assertNotEqual(response.status_code, status.HTTP_200_OK,
                          'Was able to view account list as admin')
         for account in self.users:
             response = self.client.get('/accounts/{}/'.format(account.pk))
-            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN,
+            self.assertNotEqual(response.status_code, status.HTTP_200_OK,
                              'Was able to view account details as admin')
+
+        self.logout()
 
 
     def test_delete_account(self):
@@ -135,12 +145,11 @@ class AccountsTest(TestCase):
         # Try and delete their accounts without logging in (should fail)
         for account in self.users:
             response = self.client.delete('/accounts/{}/'.format(account.pk))
-            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, 'Was able to delete accounts without logging in')
+            self.assertNotEqual(response.status_code, status.HTTP_204_NO_CONTENT, 'Was able to delete accounts without logging in')
 
         for i in range(N_TEST_USERS):
             # login as user and try to delete all accounts
-            logged_in = self.client.login(username=USERNAMES[i], password=PASSWORDS[i])
-            self.assertTrue(logged_in, 'Error logging in with test user number {}'.format(i))
+            self.login(USERNAMES[i])
             # Try and delete their accounts (we have to start indexing at i because the users before i have been deleted)
             for account in self.users[i:]:
                 # If account belongs to the user that's logged it, delete should be successful
@@ -151,19 +160,21 @@ class AccountsTest(TestCase):
                 # Otherwise delete should fail
                 else:
                     response = self.client.delete('/accounts/{}/'.format(account.pk))
-                    self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, 'Test user was able to delete an account that did not belong to it')
+                    self.assertNotEqual(response.status_code, status.HTTP_204_NO_CONTENT, 'Test user was able to delete an account that did not belong to it')
+            self.logout()
 
         # Check that admins can delete any account
         # Register test users
         self.register_test_users()
 
-        logged_in = self.client.login(username=ADMIN_USERNAME, password=ADMIN_PASSWORD)
-        self.assertTrue(logged_in, 'Error logging in with test admin user')
+        self.login(ADMIN_USERNAME)
 
         # Try and delete accounts as admin (should succeed in all cases)
         for account in self.users:
             response = self.client.delete('/accounts/{}/'.format(account.pk))
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT, 'Admin was not able to delete an account')
+
+        self.logout()
 
     def test_patch_account(self):
         """
@@ -179,14 +190,13 @@ class AccountsTest(TestCase):
             response = self.client.patch('/accounts/{}/'.format(account.pk),
                                          json.dumps({'email': NEW_EMAIL}),
                                          content_type='application/json')
-            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, 'Was able to edit a user\'s account without logging in')
+            self.assertNotEqual(response.status_code, status.HTTP_200_OK, 'Was able to edit a user\'s account without logging in')
 
         # Try and edit test users' information after logging in
         # (should succeed when editing your own information, but fail when editing other users' information)
         for i in range(N_TEST_USERS):
             # login as user and try to edit all accounts
-            logged_in = self.client.login(username=USERNAMES[i], password=PASSWORDS[i])
-            self.assertTrue(logged_in, 'Error logging in with test user number {}'.format(i))
+            self.login(USERNAMES[i])
             # Try and edit their accounts
             for account in self.users:
                 # If account belongs to the user that's logged it, patch should be successful
@@ -200,16 +210,17 @@ class AccountsTest(TestCase):
                     response = self.client.patch('/accounts/{}/'.format(account.pk),
                                                  json.dumps({'email': NEW_EMAIL}),
                                                  content_type='application/json')
-                    self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, 'Test user was able to edit an account that was it\'s own')
+                    self.assertNotEqual(response.status_code, status.HTTP_200_OK, 'Test user was able to edit an account that was it\'s own')
+            self.logout()
 
         # Try and edit test users' information with admin account (should fail in all cases)
-        logged_in = self.client.login(username=ADMIN_USERNAME, password=ADMIN_PASSWORD)
-        self.assertTrue(logged_in, 'Error logging in with test admin user')
+        self.login(ADMIN_USERNAME)
 
         # Try and delete accounts as admin (should succeed in all cases)
         for account in self.users:
             response = self.client.patch('/accounts/{}/'.format(account.pk),
                                          json.dumps({'email': NEW_EMAIL}),
                                          content_type='application/json')
-            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN,
+            self.assertNotEqual(response.status_code, status.HTTP_200_OK,
                              'Admin was able to edit a user\'s account')
+        self.logout()
