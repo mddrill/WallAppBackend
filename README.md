@@ -81,7 +81,7 @@ The post should now be visible
 curl http://127.0.0.1:8000/post/
 ```
 
-You can also edit and delete the post with the backend api, but this functionality is not yet implemented on the frontend
+You can also edit and delete the post
 
 To edit
 ```
