@@ -71,9 +71,9 @@ http://127.0.0.1:8000/api-token-auth/
 This will return a token which you can use to authenticate your post
 ```
 curl --data '{"text": "testing123"}' \
---header "Authorization: Token <token>" \
 --header "Content-Type:application/json" \
 --header "Accept: application/json" \
+--header "Authorization: Token <token>" \
 http://127.0.0.1:8000/post/
 ```
 The post should now be visible 
@@ -86,9 +86,9 @@ You can also edit and delete the post
 To edit
 ```
 curl --data '{"text": "new text"}'  \
---header "Authorization: Token <token>" \
 --header "Content-Type:application/json" \
 --header "Accept: application/json" \
+--header "Authorization: Token <token>" \
 --request PATCH http://127.0.0.1:8000/post/<post id>/
 ```
 
@@ -96,9 +96,9 @@ You can get the post id by reading the posts with `curl http://127.0.0.1:8000/po
 
 To delete
 ```
-curl --header "Authorization: Token <token>" \
---header "Content-Type:application/json" \
+curl --header "Content-Type:application/json" \
 --header "Accept: application/json" \
+--header "Authorization: Token <token>" \
 --request DELETE http://127.0.0.1:8000/post/<post id>/
 ```
 
