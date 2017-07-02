@@ -117,7 +117,5 @@ The unit tests should confirm that the email sending is working. If you want to 
     
 and replace the email host user and password with a gmail account. Be sure to allow emails from unsecure apps in your account by following the instructions here https://support.google.com/accounts/answer/6010255?hl=en
 
-Now to test it with the iOS frontend you will have to run the backend with ssl like so:
-```
-python manage.py runsslserver
-```
+Now to test it with the iOS frontend follow the instructions in the README
+https://github.com/mddrill/WallAppiOS
