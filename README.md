@@ -52,15 +52,15 @@ You can view the posts without authenticating
 curl --request GET http://127.0.0.1:8000/post/
 ```
 
-You can submit a post after creating an account and authenticating
+You can submit a post after creating an account
 ```
-curl --data '{"username": "testuser", "password": "testpassword"}' \
+curl --data '{"username": "testuser", "password": "testpassword", "email": "test@testing.com"}' \
 --header "Content-Type:application/json" \
 --header "Accept: application/json" \
 http://127.0.0.1:8000/accounts/
 ```
 
-And get the token
+And getting the token
 ```
 curl --data '{"username": "testuser", "password": "testpassword"}' \
 --header "Content-Type:application/json" \
