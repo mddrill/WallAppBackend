@@ -1,6 +1,13 @@
 # WallAppBackend
 Django backend for TSL hiring assignment
 
+Uses
+```
+Python 3
+Django 1.1
+Django-sslserver
+```
+
 Instructions for running
 
 Python 3 is required for this, to install python 3 through homebrew run:
