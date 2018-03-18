@@ -84,10 +84,10 @@ class PostTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK, 'Could not get the list of posts')
 
         # Check that there are the right number of posts
-        self.assertEqual(response.json()['count'], len(self.test_posts), 'Did not get the right number of posts')
+        self.assertEqual(response.json()['count'], len(self.test_posts)+20, 'Did not get the right number of posts')
 
         # Check that posts contain the right info
-        for i in range(len(self.test_posts)):
+        for i in range(20, len(self.test_posts)):
             self.assertEqual(response.json()['results'][i]['text'], self.test_posts[i].text, 'Post did not have the right text')
             self.assertEqual(response.json()['results'][i]['author'], str(self.test_posts[i].author), 'Post did not have the right author')
 

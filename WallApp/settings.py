@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '8y(g-$y5u9es3@+1)tcp$8p8gn1du@)#r382^a*8+g^eb@-x_u'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1']
 
@@ -74,6 +74,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'WallApp.wsgi.application'
+
+APPEND_SLASH = True
 
 
 # Database
