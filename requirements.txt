@@ -4,3 +4,4 @@ Django==1.11.2
 django-secure==1.0.1
 django-sslserver==0.19
 djangorestframework==3.6.3
+django-cors-headers==2.4.0
