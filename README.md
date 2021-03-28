@@ -1,6 +1,5 @@
 # WallAppBackend
-Django backend for TSL hiring assignment
-
+Django backend for Facebook-like Wall App
 Uses
 ```
 Python 3
